@@ -338,11 +338,18 @@ def init_callback(app):
         if parameter_slider and algo in parameter_slider:
             return parameter_slider[algo]["marks"], parameter_slider[algo]["value"]
 
-        return (
-            get_parameters_for_algo(algo, network="STRING-Physical"),
-            module_detection_algos[algo].default_param
-            * module_detection_algos[algo].multiplier,
-        )
+        try:
+            return (
+                get_parameters_for_algo(algo, network="STRING-Physical"),
+                module_detection_algos[algo].default_param
+                * module_detection_algos[algo].multiplier,
+            )
+        except FileNotFoundError:
+            # STOPGAP: the module-detection pipeline hasn't been run locally
+            # for this algorithm/network yet (see Constants.NETWORK_MODULES).
+            # Degrade gracefully instead of crashing the callback so the rest
+            # of the page (inputs, network stats, hub genes) stays usable.
+            return {0: "Data not yet available"}, 0
 
     @app.callback(
         Output("ppi-input", "children"),
@@ -449,20 +456,34 @@ def init_callback(app):
             if submitted_algo and submitted_algo in submitted_parameter_slider:
                 parameters = submitted_parameter_slider[submitted_algo]["value"]
 
-                enriched_modules = do_module_enrichment_analysis(
-                    combined_gene_ids,
-                    genomic_intervals,
-                    valid_addl_genes,
-                    submitted_network,
-                    submitted_algo,
-                    parameters,
-                )
+                try:
+                    enriched_modules = do_module_enrichment_analysis(
+                        combined_gene_ids,
+                        genomic_intervals,
+                        valid_addl_genes,
+                        submitted_network,
+                        submitted_algo,
+                        parameters,
+                    )
+                    total_num_modules = count_modules(
+                        submitted_network, submitted_algo, parameters
+                    )
+                except FileNotFoundError:
+                    # STOPGAP: no module-detection output exists locally yet
+                    # for this network/algorithm (pipeline hasn't been run,
+                    # or its results haven't been synced from the lab
+                    # server). Show a clear message instead of crashing.
+                    stats = (
+                        "No module data available locally for "
+                        f"{get_user_facing_network(submitted_network)} / "
+                        f"{get_user_facing_algo(submitted_algo)} yet. "
+                        "Run the data-prep pipeline for this network/algorithm, "
+                        "or sync the generated data from the lab server."
+                    )
+                    return [], None, {"display": "none"}, stats
 
                 # Display statistics
                 num_enriched_modules = len(enriched_modules)
-                total_num_modules = count_modules(
-                    submitted_network, submitted_algo, parameters
-                )
                 stats = f"{num_enriched_modules} out of {total_num_modules} "
                 if total_num_modules == 1:
                     stats += "module "

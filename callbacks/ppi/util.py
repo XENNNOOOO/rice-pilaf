@@ -1,3 +1,6 @@
+import os
+import pickle
+
 import networkx as nx
 
 from ..constants import Constants
@@ -67,26 +70,84 @@ def load_ppi_network(network):
             return None
 
 
+_UNIPROT_TO_MSU_CACHE = {}
+
+
+def get_uniprot_to_msu_mapping():
+    """
+    Loads (and caches in-process) the UniProt accession -> [MSU gene ID, ...]
+    mapping built for the PPI module.
+    """
+    if "mapping" in _UNIPROT_TO_MSU_CACHE:
+        return _UNIPROT_TO_MSU_CACHE["mapping"]
+
+    path = f"{Constants.MSU_MAPPING}/uniprot_to_msu.pickle"
+    if not os.path.exists(path):
+        _UNIPROT_TO_MSU_CACHE["mapping"] = {}
+        return {}
+
+    with open(path, "rb") as f:
+        mapping = pickle.load(f)
+
+    _UNIPROT_TO_MSU_CACHE["mapping"] = mapping
+    return mapping
+
+
+def get_msu_to_uniprot_mapping():
+    """
+    Builds (and caches) the reverse index: MSU gene ID -> [UniProt accession, ...]
+    The raw STRING network is labeled by UniProt accession, while query genes
+    coming from the rest of RicePilaf are MSU IDs -- this reverse index is what
+    lets us check whether a query gene is actually present in the network.
+    """
+    if "reverse" in _UNIPROT_TO_MSU_CACHE:
+        return _UNIPROT_TO_MSU_CACHE["reverse"]
+
+    uniprot_to_msu = get_uniprot_to_msu_mapping()
+    msu_to_uniprot = {}
+    for uniprot_acc, msu_genes in uniprot_to_msu.items():
+        for gene in msu_genes:
+            msu_to_uniprot.setdefault(gene, []).append(uniprot_acc)
+
+    _UNIPROT_TO_MSU_CACHE["reverse"] = msu_to_uniprot
+    return msu_to_uniprot
+
+
 def induce_subnetwork(G, gene_ids):
     """
-    Returns the subgraph of G induced by the given set of genes,
-    restricted to genes that are actually present in the network
+    Returns the subgraph of G induced by the given set of MSU genes,
+    restricted to genes that are actually present in the network.
+
+    The network itself is labeled by UniProt accession, so query genes
+    (MSU IDs) are first translated to their corresponding UniProt
+    accession(s) before checking membership.
 
     Parameters:
-    - G: NetworkX graph representation of the full PPI network
-    - gene_ids: Accessions of the query genes
+    - G: NetworkX graph representation of the full PPI network (UniProt-labeled)
+    - gene_ids: MSU accessions of the query genes
 
     Returns:
-    - Induced subgraph
-    - Set of query genes that were not found in the network
+    - Induced subgraph (still UniProt-labeled)
+    - Set of query MSU genes that were not found in the network (either no
+      UniProt mapping exists, or none of their mapped accessions are in G)
     """
     if G is None:
         return None, set(gene_ids)
 
-    present = [gene for gene in gene_ids if gene in G]
-    unrecognized = set(gene_ids) - set(present)
+    msu_to_uniprot = get_msu_to_uniprot_mapping()
 
-    return G.subgraph(present).copy(), unrecognized
+    present_accessions = []
+    unrecognized = set()
+    for gene in gene_ids:
+        accessions = [
+            acc for acc in msu_to_uniprot.get(gene, []) if acc in G
+        ]
+        if accessions:
+            present_accessions.extend(accessions)
+        else:
+            unrecognized.add(gene)
+
+    return G.subgraph(present_accessions).copy(), unrecognized
 
 
 def compute_network_stats(G):
@@ -125,21 +186,34 @@ def compute_network_stats(G):
 
 def get_hub_genes(G, top_n=10):
     """
-    Ranks genes in the (sub)network by degree centrality to identify hub genes
+    Ranks genes in the (sub)network by degree centrality to identify hub genes.
+    The network is UniProt-labeled internally; each hub is translated back to
+    its MSU gene ID(s) for display, since that's what the rest of RicePilaf
+    (and the person using it) works with.
 
     Parameters:
-    - G: NetworkX graph
+    - G: NetworkX graph (UniProt-labeled)
     - top_n: Number of top hub genes to return
 
     Returns:
-    - List of (gene, degree) tuples, sorted by degree in descending order
+    - List of (display_label, degree) tuples, sorted by degree in descending
+      order. display_label is one or more MSU gene IDs (slash-separated if a
+      single UniProt accession maps to more than one), falling back to the
+      raw UniProt accession if no MSU mapping is available.
     """
     if G is None or G.number_of_nodes() == 0:
         return []
 
+    uniprot_to_msu = get_uniprot_to_msu_mapping()
     degrees = sorted(dict(G.degree()).items(), key=lambda x: x[1], reverse=True)
 
-    return degrees[:top_n]
+    hub_genes = []
+    for uniprot_acc, degree in degrees[:top_n]:
+        msu_genes = uniprot_to_msu.get(uniprot_acc)
+        label = "/".join(msu_genes) if msu_genes else uniprot_acc
+        hub_genes.append((label, degree))
+
+    return hub_genes
 
 
 def get_query_network_summary(network, gene_ids):
