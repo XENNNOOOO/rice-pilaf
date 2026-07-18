@@ -117,6 +117,17 @@ layout = html.Div(
                                     size="sm",
                                     className="ms-3 table-button",
                                 ),
+                                dbc.Button(
+                                    [
+                                        html.I(className="bi bi-diagram-3 me-2"),
+                                        "Analyze in PPI Network",
+                                    ],
+                                    id="summary-send-genes-to-ppi",
+                                    n_clicks=0,
+                                    color="light",
+                                    size="sm",
+                                    className="ms-3 table-button",
+                                ),
                             ],
                             style={"textAlign": "right"},
                         ),

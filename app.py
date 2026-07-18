@@ -14,6 +14,7 @@ import callbacks.epigenome.callbacks
 import callbacks.homepage.callbacks
 import callbacks.homepage.util
 import callbacks.lift_over.callbacks
+import callbacks.ppi.callbacks
 import callbacks.summary.callbacks
 import callbacks.template.callbacks
 import callbacks.text_mining.callbacks
@@ -276,6 +277,27 @@ app.layout = lambda: dbc.Container(
                 ),
                 dcc.Store(id="coexpression-is-submitted", storage_type="session"),
                 # ==============================
+                # Protein-Protein Interaction
+                # ==============================
+                dcc.Store(
+                    id="ppi-submitted-parameter-slider", storage_type="session"
+                ),
+                dcc.Store(id="ppi-submitted-module", storage_type="session"),
+                dcc.Store(id="ppi-pathway-active-tab", storage_type="session"),
+                dcc.Store(id="ppi-graph-active-layout", storage_type="session"),
+                dcc.Store(id="ppi-submitted-addl-genes", storage_type="session"),
+                dcc.Store(id="ppi-valid-addl-genes", storage_type="session"),
+                dcc.Store(id="ppi-combined-genes", storage_type="session"),
+                dcc.Store(id="ppi-submitted-network", storage_type="session"),
+                dcc.Store(
+                    id="ppi-submitted-clustering-algo", storage_type="session"
+                ),
+                dcc.Store(id="ppi-is-submitted", storage_type="session"),
+                # Holds the gene list prioritized upstream on the Summary page
+                # (see callbacks/summary/callbacks.py), consumed on load by the
+                # PPI controller to pre-populate its additional-genes input
+                dcc.Store(id="ppi-carried-over-genes", storage_type="session"),
+                # ==============================
                 # Regulatory Feature Enrichment
                 # ==============================
                 dcc.Store(id="tfbs-is-submitted", storage_type="session"),
@@ -307,6 +329,7 @@ callbacks.homepage.callbacks.init_callback(app)
 callbacks.lift_over.callbacks.init_callback(app)
 callbacks.epigenome.callbacks.init_callback(app)
 callbacks.coexpression.callbacks.init_callback(app)
+callbacks.ppi.callbacks.init_callback(app)
 callbacks.tf_enrich.callbacks.init_callback(app)
 callbacks.text_mining.callbacks.init_callback(app)
 callbacks.summary.callbacks.init_callback(app)

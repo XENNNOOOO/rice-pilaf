@@ -55,6 +55,28 @@ rule module_detect_fox:
             wcc = config['wcc_threshold'].keys()
         )
 
+# NOTE (Snakemake automation fix):
+# FOX operates on an integer-labeled edge list rather than the raw,
+# string-labeled (UniProt-accession) network. Previously, no rule produced
+# "mapping/int-edge-list.txt" or "mapping/int-edge-list-node-mapping.pickle":
+# `execute_fox` required the former and `get_mod_fox_uniprot` required the
+# latter, but each had been drafted assuming the *other* rule's output would
+# already exist, so Snakemake could not resolve either without the missing
+# file already being present on disk ("cyclical" input resolution). In fact
+# scripts/network_util/convert-to-int-edge-list.py produces both files in a
+# single pass from the raw network, so both are declared as the output of one
+# rule below, with the raw network (the same input used by ClusterONE) as
+# the sole upstream dependency. This removes the false inter-rule cycle.
+rule generate_int_edge_list:
+    input:
+        lambda wildcards: config["networks"][wildcards.network]
+    output:
+        edge_list = "{mod_detect_dir}/{network}/mapping/int-edge-list.txt",
+        node_mapping = "{mod_detect_dir}/{network}/mapping/int-edge-list-node-mapping.pickle"
+    shell:
+        "python scripts/network_util/convert-to-int-edge-list.py " \
+        "{input} {wildcards.mod_detect_dir}/{wildcards.network}/mapping"
+
 rule execute_fox:
     input:
         "{mod_detect_dir}/{network}/mapping/int-edge-list.txt"

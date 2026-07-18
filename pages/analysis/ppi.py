@@ -146,7 +146,7 @@ module_detection_algo_modal = dbc.Modal(
             ]
         ),
     ],
-    id="coexpression-clustering-algo-modal",
+    id="ppi-clustering-algo-modal",
     is_open=False,
     size="xl",
     scrollable=True,
@@ -202,7 +202,7 @@ ppi_network_modal = dbc.Modal(
             ]
         ),
     ],
-    id="coexpression_network_modal",
+    id="ppi-network-modal",
     is_open=False,
     size="xl",
     scrollable=True,
@@ -298,7 +298,7 @@ parameter_modal = dbc.Modal(
             ]
         ),
     ],
-    id="coexpression-parameter-modal",
+    id="ppi-parameter-modal",
     is_open=False,
     size="xl",
     scrollable=True,
@@ -330,7 +330,7 @@ converter_modal = dbc.Modal(
             ]
         ),
     ],
-    id="coexpression-converter-modal",
+    id="ppi-converter-modal",
     is_open=False,
     size="lg",
     scrollable=True,
@@ -358,7 +358,7 @@ layout = html.Div(
                                     className="fa-solid fa-up-right-from-square fa-2xs",
                                 ),
                             ],
-                            href="https://github.com/bioinfodlsu/rice-pilaf/wiki/2.3-Co%E2%80%90expression-Network-Analysis",
+                            href="https://github.com/bioinfodlsu/rice-pilaf/wiki/2.4-Protein%E2%80%90Protein-Interaction-Network-Analysis",
                             target="_blank",
                             className="top-navbar-item",
                         ),
@@ -372,7 +372,7 @@ layout = html.Div(
         html.Div(
             [
                 html.I(className="bi bi-chevron-bar-right me-2 non-clickable"),
-                html.Span(id="coexpression-genomic-intervals-input"),
+                html.Span(id="ppi-genomic-intervals-input"),
             ],
             className="analysis-intro p-3",
         ),
@@ -384,7 +384,7 @@ layout = html.Div(
                         "Include additional genes from the pangenome lift-over or the text mining results",
                         html.I(
                             className="bi bi-info-circle",
-                            id="coexpression-converter-tooltip",
+                            id="ppi-converter-tooltip",
                             n_clicks=0,
                         ),
                     ]
@@ -396,27 +396,27 @@ layout = html.Div(
                 ),
                 converter_modal,
                 dbc.Alert(
-                    id="coexpression-addl-genes-error",
+                    id="ppi-addl-genes-error",
                     color="danger",
                     style={"display": "none"},
                 ),
-                dbc.Textarea(id="coexpression-addl-genes"),
+                dbc.Textarea(id="ppi-addl-genes"),
                 html.Br(),
                 dbc.Label(
                     [
                         "Select the protein-protein interaction network",
                         html.I(
                             className="bi bi-info-circle",
-                            id="coexpression-network-tooltip",
+                            id="ppi-network-tooltip",
                             n_clicks=0,
                         ),
                     ]
                 ),
                 html.Br(),
                 dbc.RadioItems(
-                    id="coexpression-network",
+                    id="ppi-network",
                     options=PPI_NETWORKS_VALUE_LABEL,
-                    value="STRING",
+                    value="STRING-Physical",
                     inline=True,
                     className="ms-3 mt-1",
                 ),
@@ -426,7 +426,7 @@ layout = html.Div(
                         "Select a module detection algorithm ",
                         html.I(
                             className="bi bi-info-circle",
-                            id="coexpression-clustering-algo-tooltip",
+                            id="ppi-clustering-algo-tooltip",
                             n_clicks=0,
                         ),
                     ]
@@ -434,7 +434,7 @@ layout = html.Div(
                 module_detection_algo_modal,
                 html.Br(),
                 dbc.RadioItems(
-                    id="coexpression-clustering-algo",
+                    id="ppi-clustering-algo",
                     options=MODULE_DETECTION_ALGOS_VALUE_LABEL,
                     value="clusterone",
                     inline=True,
@@ -447,11 +447,11 @@ layout = html.Div(
                         "Select the ",
                         html.Span(
                             "parameter for running the algorithm",
-                            id="coexpression-parameter-name",
+                            id="ppi-parameter-name",
                         ),
                         html.I(
                             className="bi bi-info-circle",
-                            id="coexpression-parameter-tooltip",
+                            id="ppi-parameter-tooltip",
                             n_clicks=0,
                         ),
                     ],
@@ -461,7 +461,7 @@ layout = html.Div(
                 html.Div(
                     [
                         dcc.Slider(
-                            id="coexpression-parameter-slider",
+                            id="ppi-parameter-slider",
                             step=None,
                             marks={
                                 0: "1 (Loose Modules)",
@@ -472,13 +472,13 @@ layout = html.Div(
                             value=30,
                         )
                     ],
-                    id="coexpression-parameter-slider-container",
+                    id="ppi-parameter-slider-container",
                 ),
                 parameter_modal,
                 html.Br(),
                 dbc.Button(
                     "Run Analysis",
-                    id="coexpression-submit",
+                    id="ppi-submit",
                     className="page-button",
                     n_clicks=0,
                 ),
@@ -487,31 +487,68 @@ layout = html.Div(
         ),
         html.Br(),
         html.Div(
-            id="coexpression-results-container",
+            id="ppi-results-container",
             style={"display": "none"},
             children=[
                 dcc.Loading(
-                    id="coexpression-loading",
+                    id="ppi-loading",
                     children=[
                         html.Hr(className="mt-3 mb-3"),
                         html.Br(),
                         html.Div(
-                            id="coexpression-input", className="analysis-intro p-3"
+                            id="ppi-input", className="analysis-intro p-3"
+                        ),
+                        html.Br(),
+                        html.Div(
+                            id="ppi-network-stats-container",
+                            children=[
+                                dbc.Alert(
+                                    id="ppi-network-alert",
+                                    color="warning",
+                                    style={"display": "none"},
+                                ),
+                                html.Div(
+                                    [
+                                        html.Div(
+                                            [
+                                                html.H6(
+                                                    "Query Network Statistics",
+                                                    className="mb-2",
+                                                ),
+                                                html.Span(id="ppi-network-stats"),
+                                            ],
+                                            className="w-50",
+                                        ),
+                                        html.Div(
+                                            [
+                                                html.H6(
+                                                    "Top Hub Genes",
+                                                    className="mb-2",
+                                                ),
+                                                html.Span(id="ppi-hub-genes"),
+                                            ],
+                                            className="w-50",
+                                        ),
+                                    ],
+                                    className="d-flex flex-row",
+                                ),
+                            ],
+                            className="analysis-intro p-3",
                         ),
                         html.Br(),
                         html.Div(
                             [
                                 html.Div(
-                                    [html.Span(id="coexpression-module-stats")],
+                                    [html.Span(id="ppi-module-stats")],
                                     className="stats",
                                 ),
                                 html.Div(
-                                    id="coexpression-results-module-tabs-container",
+                                    id="ppi-results-module-tabs-container",
                                     children=[
                                         dbc.Label(
                                             "Select an enriched module to infer its likely function via ontology and pathway enrichment analysis"
                                         ),
-                                        dcc.Dropdown(id="coexpression-modules"),
+                                        dcc.Dropdown(id="ppi-modules"),
                                     ],
                                     className="pt-3 pb-2",
                                 ),
@@ -521,14 +558,14 @@ layout = html.Div(
                     ],
                 ),
                 html.Div(
-                    id="coexpression-graph-container",
+                    id="ppi-graph-container",
                     children=[
                         html.Div(
-                            id="coexpression-table-container",
+                            id="ppi-table-container",
                             children=[
                                 html.Br(),
                                 html.Div(
-                                    [html.Span(id="coexpression-graph-stats")],
+                                    [html.Span(id="ppi-graph-stats")],
                                     className="mb-3 stats",
                                 ),
                                 html.P(
@@ -536,7 +573,7 @@ layout = html.Div(
                                     className="mb-4",
                                 ),
                                 dbc.Tabs(
-                                    id="coexpression-modules-pathway",
+                                    id="ppi-modules-pathway",
                                     active_tab="tab-0",
                                     children=[
                                         dcc.Tab(
@@ -570,7 +607,7 @@ layout = html.Div(
                                                     html.Div(
                                                         [
                                                             html.Span(
-                                                                id="coexpression-table-stats"
+                                                                id="ppi-table-stats"
                                                             )
                                                         ],
                                                         className="mb-3 stats",
@@ -582,14 +619,14 @@ layout = html.Div(
                                                             ),
                                                             "Export to CSV",
                                                         ],
-                                                        id="coexpression-export-table",
+                                                        id="ppi-export-table",
                                                         n_clicks=0,
                                                         color="light",
                                                         size="sm",
                                                         className="table-button",
                                                     ),
                                                     dcc.Download(
-                                                        id="coexpression-download-df-to-csv"
+                                                        id="ppi-download-df-to-csv"
                                                     ),
                                                     dbc.Button(
                                                         [
@@ -598,7 +635,7 @@ layout = html.Div(
                                                             ),
                                                             "Reset Table",
                                                         ],
-                                                        id="coexpression-reset-table",
+                                                        id="ppi-reset-table",
                                                         color="light",
                                                         size="sm",
                                                         className="ms-3 table-button",
@@ -608,7 +645,7 @@ layout = html.Div(
                                             )
                                         ),
                                         dash_table.DataTable(
-                                            id="coexpression-pathways",
+                                            id="ppi-pathways",
                                             style_cell={"whiteSpace": "pre-line"},
                                             markdown_options={"html": True},
                                             sort_action="native",
@@ -633,7 +670,7 @@ layout = html.Div(
                                         ),
                                         dbc.Label("Select the graph display layout"),
                                         dbc.RadioItems(
-                                            id="coexpression-graph-layout",
+                                            id="ppi-graph-layout",
                                             options=[
                                                 {
                                                     "value": "circle",
@@ -669,14 +706,14 @@ layout = html.Div(
                                                     ),
                                                     "Export Edge List",
                                                 ],
-                                                id="coexpression-export-graph",
+                                                id="ppi-export-graph",
                                                 color="light",
                                                 size="sm",
                                                 n_clicks=0,
                                                 className="table-button",
                                             ),
                                             dcc.Download(
-                                                id="coexpression-download-graph-to-json"
+                                                id="ppi-download-graph-to-json"
                                             ),
                                             dbc.Button(
                                                 [
@@ -685,7 +722,7 @@ layout = html.Div(
                                                     ),
                                                     "Reset Graph Display",
                                                 ],
-                                                id="coexpression-reset-graph",
+                                                id="ppi-reset-graph",
                                                 n_clicks=0,
                                                 color="light",
                                                 size="sm",
@@ -704,7 +741,7 @@ layout = html.Div(
                                         dcc.Loading(
                                             [
                                                 cyto.Cytoscape(
-                                                    id="coexpression-module-graph",
+                                                    id="ppi-module-graph",
                                                     className="mb-3",
                                                     layout={"name": "circle"},
                                                     style={
@@ -753,12 +790,12 @@ layout = html.Div(
                                     dcc.Loading(
                                         html.Div(
                                             children="Click on a node to display information about the gene.",
-                                            id="coexpression-module-graph-node-data",
+                                            id="ppi-module-graph-node-data",
                                             className="p-3",
                                         )
                                     ),
                                     className="w-25",
-                                    id="coexpression-module-graph-node-data-container",
+                                    id="ppi-module-graph-node-data-container",
                                 ),
                             ],
                             className="d-flex flex-row",

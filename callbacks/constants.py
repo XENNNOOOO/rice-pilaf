@@ -52,6 +52,7 @@ class Constants(object):
     TEMP_LIFT_OVER = "lift_over"
     TEMP_EPIGENOME = "epigenome"
     TEMP_COEXPRESSION = "co_expression"
+    TEMP_PPI = "ppi"
     TEMP_TEXT_MINING = "text_mining"
     TEMP_SUMMARY = "summary"
 
