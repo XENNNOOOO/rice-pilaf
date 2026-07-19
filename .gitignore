@@ -220,3 +220,6 @@ assets/fontawesome-*/
 LazyFox
 
 .snakemake
+
+# Dev Container Extension
+.devcontainer
