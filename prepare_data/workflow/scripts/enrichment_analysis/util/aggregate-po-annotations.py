@@ -47,7 +47,7 @@ def map_to_id_to_names(oryzabase_file):
                     po_id = po[0].strip()
                     # Remove translation
                     po_name = po[1]
-                    po_name = po_name[: po_name.index("_")].strip()
+                    po_name = po_name.split("_")[0].strip()
 
                 except IndexError:
                     continue

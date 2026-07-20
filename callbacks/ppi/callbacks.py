@@ -468,17 +468,21 @@ def init_callback(app):
                     total_num_modules = count_modules(
                         submitted_network, submitted_algo, parameters
                     )
-                except FileNotFoundError:
+                except FileNotFoundError as e:
                     # STOPGAP: no module-detection output exists locally yet
                     # for this network/algorithm (pipeline hasn't been run,
                     # or its results haven't been synced from the lab
                     # server). Show a clear message instead of crashing.
+                    # TEMP DEBUG: surface the exact missing path so we can
+                    # pin down the real cause instead of guessing further.
                     stats = (
                         "No module data available locally for "
                         f"{get_user_facing_network(submitted_network)} / "
                         f"{get_user_facing_algo(submitted_algo)} yet. "
                         "Run the data-prep pipeline for this network/algorithm, "
-                        "or sync the generated data from the lab server."
+                        "or sync the generated data from the lab server. "
+                        f"[DEBUG: missing file was {e.filename}, "
+                        f"parameters={parameters!r} (type={type(parameters).__name__})]"
                     )
                     return [], None, {"display": "none"}, stats
 
