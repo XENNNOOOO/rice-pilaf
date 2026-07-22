@@ -211,11 +211,6 @@ def do_module_enrichment_analysis(
     - Enriched modules (i.e., their respectives indices and adjust p-values)
     """
     implicated_genes = set(implicated_gene_ids)
-    # BUGFIX: the parameter slider's raw value (e.g. 0.3 * 100 = 30.0) is a
-    # float, but on-disk module directories are named with plain integers
-    # (e.g. "30"). Without this cast, path lookups below silently fail with
-    # FileNotFoundError since "30.0" != "30".
-    parameters = int(parameters)
     INPUT_GENES_DIR = create_module_enrichment_results_dir(
         genomic_intervals, addl_genes, network, algo, parameters
     )
@@ -619,7 +614,6 @@ def convert_to_df(active_tab, module_idx, network, algo, parameters):
     """
     dir = enrichment_tabs[get_tab_index(active_tab)].path
     enrichment_type = dir.split("/")[-1]
-    parameters = int(parameters)
 
     file = f"{Constants.ENRICHMENT_ANALYSIS}/{network}/output/{algo}/{parameters}/{dir}/results/{enrichment_type}-df-{module_idx}.tsv"
 
@@ -740,49 +734,11 @@ def convert_to_df(active_tab, module_idx, network, algo, parameters):
         return convert_to_df_spia(result, network), empty
 
 
-def convert_module_to_edge_list(module, network_file, output_dir, filename, network=None):
+def convert_module_to_edge_list(module, network_file, output_dir, filename):
     module = set(module)
     selected_nodes = set()
-
-    # PPI networks (e.g. STRING-Physical) are labeled by UniProt accession,
-    # while module gene lists are MSU-labeled -- unlike coexpression networks,
-    # which are already MSU-labeled throughout. Translate the module's MSU
-    # genes to UniProt accessions before matching network edges, then
-    # translate matched edges back to MSU so the rest of the app (node info
-    # panel, implicated-gene highlighting) sees consistent gene IDs.
-    from ..ppi import util as ppi_util
-
-    is_ppi_network = network is not None and any(
-        entry["value"] == network for entry in ppi_util.PPI_NETWORKS_VALUE_LABEL
-    )
-
-    if is_ppi_network:
-        msu_to_uniprot = ppi_util.get_msu_to_uniprot_mapping()
-        uniprot_to_msu = ppi_util.get_uniprot_to_msu_mapping()
-
-        uniprot_module = set()
-        for gene in module:
-            uniprot_module.update(msu_to_uniprot.get(gene, []))
-
-        with open(network_file) as network_f, open(
-            f"{output_dir}/{filename}", "w"
-        ) as output:
-            for edge in network_f:
-                edge = edge.rstrip()
-                # Ignore a trailing weight column, if present
-                nodes = edge.split("\t")[:2]
-
-                if nodes[0] in uniprot_module and nodes[1] in uniprot_module:
-                    gene0 = uniprot_to_msu.get(nodes[0], [nodes[0]])[0]
-                    gene1 = uniprot_to_msu.get(nodes[1], [nodes[1]])[0]
-                    selected_nodes.add(gene0)
-                    selected_nodes.add(gene1)
-                    output.write(f"{gene0}\t{gene1}\n")
-
-        return
-
-    with open(network_file) as network_f, open(f"{output_dir}/{filename}", "w") as output:
-        for edge in network_f:
+    with open(network_file) as network, open(f"{output_dir}/{filename}", "w") as output:
+        for edge in network:
             edge = edge.rstrip()
             nodes = edge.split("\t")
 
@@ -794,7 +750,7 @@ def convert_module_to_edge_list(module, network_file, output_dir, filename, netw
     assert len(selected_nodes - module) == 0
 
 
-def convert_modules_to_edgelist(network_file, module_file, module_index, output_dir, network=None):
+def convert_modules_to_edgelist(network_file, module_file, module_index, output_dir):
     make_dir(output_dir)
 
     with open(module_file) as modules:
@@ -803,9 +759,7 @@ def convert_modules_to_edgelist(network_file, module_file, module_index, output_
                 module = module.rstrip()
                 module = module.split("\t")
                 filename = f"module-{idx + 1}.tsv"
-                convert_module_to_edge_list(
-                    module, network_file, output_dir, filename, network=network
-                )
+                convert_module_to_edge_list(module, network_file, output_dir, filename)
 
                 break
 
@@ -830,7 +784,6 @@ def load_module_graph(implicated_gene_ids, module, network, algo, parameters, la
     try:
         # Ignore the word "Module" at the start
         module_idx = int(module.split(" ")[1])
-        parameters = int(parameters)
         OUTPUT_DIR = f"{Constants.TEMP}/{network}/{algo}/modules/{parameters}"
         coexpress_nw = f"{OUTPUT_DIR}/module-{module_idx}.tsv"
 
@@ -839,7 +792,7 @@ def load_module_graph(implicated_gene_ids, module, network, algo, parameters, la
             MODULE_FILE = f"{Constants.NETWORK_MODULES}/{network}/MSU/{algo}/{parameters}/{algo}-module-list.tsv"
 
             convert_modules_to_edgelist(
-                NETWORK_FILE, MODULE_FILE, module_idx, OUTPUT_DIR, network=network
+                NETWORK_FILE, MODULE_FILE, module_idx, OUTPUT_DIR
             )
 
         G = nx.read_edgelist(coexpress_nw, data=(("coexpress", float)))
@@ -871,7 +824,6 @@ def load_module_graph(implicated_gene_ids, module, network, algo, parameters, la
 
 
 def count_modules(network, algo, parameters):
-    parameters = int(parameters)
     with open(
         f"{Constants.NETWORK_MODULES}/{network}/MSU/{algo}/{parameters}/{algo}-module-list.tsv"
     ) as f:
