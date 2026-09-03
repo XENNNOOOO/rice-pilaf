@@ -133,6 +133,7 @@ data/
 data.zip
 static/
 enrichment_analysis/data/
+static.tgz
 
 # History files
 .Rhistory
