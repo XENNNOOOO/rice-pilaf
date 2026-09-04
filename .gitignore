@@ -133,6 +133,7 @@ data/
 data.zip
 static/
 enrichment_analysis/data/
+static.tgz
 
 # History files
 .Rhistory
@@ -220,6 +221,3 @@ assets/fontawesome-*/
 LazyFox
 
 .snakemake
-
-# Dev Container Extension
-.devcontainer
