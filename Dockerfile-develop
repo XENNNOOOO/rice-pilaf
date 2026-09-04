@@ -23,26 +23,29 @@ RUN set -ex \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# 3. Global tool installations
 
 # Handle dependency problems related to Java installation:
 # https://stackoverflow.com/questions/61815233/install-java-runtime-in-debian-based-docker-image
 RUN mkdir -p /usr/share/man/man1 /usr/share/man/man2
 
-RUN mkdir -p /tmp
+# this used to install ClusterONE and LazyFox into /usr/local/lib so that they are
+# accessible as command line tools. This is a workaround since mounting happens after
+# the container is built. But to be as backwards compatible as possible, the
+# install_clusterone_and_lazyfox.sh is made available instead to mimic previous behavior.
+# RUN mkdir -p /tmp
 
-RUN mkdir -p /usr/local/lib/clusterone \
-    && wget https://paccanarolab.org/static_content/clusterone/cluster_one-1.0.jar -O /usr/local/lib/clusterone/cluster_one-1.0.jar \
-    && printf '#!/bin/bash\njava -jar /usr/local/lib/clusterone/cluster_one-1.0.jar "$@"\n' > /usr/local/bin/clusterone \
-    && chmod +x /usr/local/bin/clusterone
+# RUN mkdir -p /usr/local/lib/clusterone \
+#     && wget https://paccanarolab.org/static_content/clusterone/cluster_one-1.0.jar -O /usr/local/lib/clusterone/cluster_one-1.0.jar \
+#     && printf '#!/bin/bash\njava -jar /usr/local/lib/clusterone/cluster_one-1.0.jar "$@"\n' > /usr/local/bin/clusterone \
+#     && chmod +x /usr/local/bin/clusterone
 
-RUN git clone https://github.com/TimGarrels/LazyFox /tmp/lazyfoxdir \
-    && cd /tmp/lazyfoxdir && git reset --hard d08f3c084df19bd2a1726159f181bbe3ad6f5bf4 \
-    && mkdir build && cd build && cmake .. && make \
-    && mv LazyFox /usr/local/bin/LazyFox && chmod +x /usr/local/bin/LazyFox \
-    && rm -rf /tmp/lazyfoxdir
+# RUN git clone https://github.com/TimGarrels/LazyFox /tmp/lazyfoxdir \
+#     && cd /tmp/lazyfoxdir && git reset --hard d08f3c084df19bd2a1726159f181bbe3ad6f5bf4 \
+#     && mkdir build && cd build && cmake .. && make \
+#     && mv LazyFox /usr/local/bin/LazyFox && chmod +x /usr/local/bin/LazyFox \
+#     && rm -rf /tmp/lazyfoxdir
 
-# 4. Install Python & R dependencies
+# Install Python & R dependencies
 COPY dependencies/requirements-app.txt /tmp/requirements-app.txt
 COPY dependencies/requirements-workflow.txt /tmp/requirements-workflow.txt
 COPY dependencies/r-packages-workflow.sh /tmp/r-packages-workflow.sh
