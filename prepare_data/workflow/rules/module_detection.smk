@@ -1,6 +1,7 @@
 # Resolve Network Dependency
 for key, path in config['networks'].items():
     config["networks"][key] = path.format(network_dir=config["network_dir"])
+from os import path
 
 rule module_detect_clusterone:
     input:
@@ -55,18 +56,6 @@ rule module_detect_fox:
             wcc = config['wcc_threshold'].keys()
         )
 
-# NOTE (Snakemake automation fix):
-# FOX operates on an integer-labeled edge list rather than the raw,
-# string-labeled (UniProt-accession) network. Previously, no rule produced
-# "mapping/int-edge-list.txt" or "mapping/int-edge-list-node-mapping.pickle":
-# `execute_fox` required the former and `get_mod_fox_uniprot` required the
-# latter, but each had been drafted assuming the *other* rule's output would
-# already exist, so Snakemake could not resolve either without the missing
-# file already being present on disk ("cyclical" input resolution). In fact
-# scripts/network_util/convert-to-int-edge-list.py produces both files in a
-# single pass from the raw network, so both are declared as the output of one
-# rule below, with the raw network (the same input used by ClusterONE) as
-# the sole upstream dependency. This removes the false inter-rule cycle.
 rule generate_int_edge_list:
     input:
         lambda wildcards: config["networks"][wildcards.network]
@@ -97,3 +86,63 @@ rule get_mod_fox_uniprot:
         "python scripts/module_util/restore-node-labels-in-modules.py " \
         "{{input.fox_result}} {{input.node_mapping}} " \
         "{0}/{{wildcards.network}}/fox/{{wildcards.wcc}}/uniprot fox".format(config['network_mod_dir'])
+
+rule execute_coach:
+    input:
+        path.join(config['mod_detect_dir'], "{network}/mapping/int-edge-list.txt")
+    params:
+        affinity_threshold_value = lambda wildcards: config['affinity_thresholds'][wildcards.affinity_threshold]
+    output:
+        path.join(config['mod_detect_dir'], "{network}/temp/coach/coach-int-module-list-{affinity_threshold}.csv")
+    shell:
+        "python scripts/module_detection/detect-modules-via-coach.py " \
+        "--affinity_threshold {params.affinity_threshold_value} {input} " \
+        f"{path.join(config['mod_detect_dir'], '{wildcards.network}/temp/coach/')}"
+
+# rule relabel_nodes_in_coach_modules:
+#     input:
+#         coach_results = path.join(config['mod_detect_dir'], "{network}/temp/coach/coach-int-module-list-{affinity_threshold}.csv"),
+#         node_mapping = path.join(config['mod_detect_dir'], "{network}/mapping/int-edge-list-node-mapping.pickle")
+#     output:
+#         path.join(config['mod_detect_dir'], "{network}/coach/{affinity_threshold}/uniprot/coach-module-list.tsv")
+#     shell:
+#         "python scripts/module_util/restore-node-labels-in-modules.py " \
+#         "{input.coach_results} {input.node_mapping} " \
+#         f"{path.join(config['mod_detect_dir'], '{wildcards.network}/coach/{wildcards.affinity_threshold}/uniprot')} " \
+#         "coach"
+
+rule execute_demon:
+    input:
+        path.join(config['mod_detect_dir'], "{network}/mapping/int-edge-list.txt")
+    params:
+        merging_threshold_value = lambda wildcards: config['merging_thresholds'][wildcards.merging_threshold]
+    output:
+        path.join(config['mod_detect_dir'], "{network}/temp/demon/demon-int-module-list-{merging_threshold}.csv")
+    shell:
+        "python scripts/module_detection/detect-modules-via-demon.py " \
+        "--epsilon {params.merging_threshold_value} {input} " \
+        f"{path.join(config['mod_detect_dir'], '{wildcards.network}/temp/demon/')}"
+
+# rule relabel_nodes_in_demon_modules:
+#     input:
+#         demon_results = path.join(config['mod_detect_dir'], "{network}/temp/demon/demon-int-module-list-{merging_threshold}.csv"),
+#         node_mapping = path.join(config['mod_detect_dir'], "{network}/mapping/int-edge-list-node-mapping.pickle")
+#     output:
+#         path.join(config['mod_detect_dir'], "{network}/demon/{merging_threshold}/uniprot/demon-module-list.tsv")
+#     shell:
+#         "python scripts/module_util/restore-node-labels-in-modules.py " \
+#         "{input.demon_results} {input.node_mapping} " \
+#         f"{path.join(config['mod_detect_dir'], '{wildcards.network}/demon/{wildcards.merging_threshold}/uniprot')} " \
+#         "demon"
+
+rule relabel_nodes_from_int_to_id_in_detected_modules:
+    input:
+        demon_results = path.join(config['mod_detect_dir'], "{network}/temp/{algo}/{algo}-int-module-list-{merging_threshold}.csv"),
+        node_mapping = path.join(config['mod_detect_dir'], "{network}/mapping/int-edge-list-node-mapping.pickle")
+    output:
+        path.join(config['mod_detect_dir'], "{network}/{algo}/{merging_threshold}/uniprot/{algo}-module-list.tsv")
+    shell:
+        "python scripts/module_util/restore-node-labels-in-modules.py " \
+        "{input.demon_results} {input.node_mapping} " \
+        f"{path.join(config['mod_detect_dir'], '{wildcards.network}/{wildcards.algo}/{wildcards.merging_threshold}/uniprot')} " \
+        "{wildcards.algo}"

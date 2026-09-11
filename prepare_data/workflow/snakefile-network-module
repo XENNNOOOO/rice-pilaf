@@ -1,0 +1,22 @@
+configfile: "configfile.yaml"
+
+# include: "rules/execute_enrichment_analysis.smk"
+include: "rules/prepare_enrichment_analysis.smk"
+include: "rules/module_detection.smk"
+# include : "rules/test.smk"
+# rule test:
+#     input:
+#         "../../static/raw_data/enrichment_analysis/temp/STRING-Physical/clusterone/30/module_count.txt"
+
+rule test:
+    input:
+        expand(
+            path.join(config['mod_detect_dir'], "{network}/coach/{affinity_threshold}/uniprot/coach-module-list.tsv"),
+            affinity_threshold = config['affinity_thresholds'],
+            network = config['ppi_networks']
+        ),
+        expand(
+            path.join(config['mod_detect_dir'], "{network}/demon/{merging_threshold}/uniprot/demon-module-list.tsv"),
+            merging_threshold = config['merging_thresholds'],
+            network = config['ppi_networks']
+        )

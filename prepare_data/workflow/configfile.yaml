@@ -53,6 +53,9 @@ gene_desc_dir: "../../static/app_data/gene_descriptions"
 networks:
     "STRING-Physical": "{network_dir}/STRING-Physical.txt"
 
+ppi_networks:
+    - "STRING-Physical"
+
 get_mod_from_clusterone_path: "scripts/module_util/get-modules-from-clusterone-results.py"
 
 # ClusterOne
@@ -69,6 +72,20 @@ wcc_threshold:
     20: 0.2
     40: 0.4
     60: 0.6
+
+# Coach
+affinity_thresholds:
+    "150": 0.15
+    "175": 0.175
+    "200": 0.2
+    "225": 0.225
+
+# Demon
+merging_thresholds:
+    "0": 0
+    "25": 0.25
+    "50": 0.5
+    "75": 0.75
 
 # FIRST PARAM (For Counting Modules)
 first_param_list:
