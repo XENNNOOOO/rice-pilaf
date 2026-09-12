@@ -40,7 +40,7 @@ tfbs_links:
 
 # MODULE DETECTION
 network_dir: "../../static/app_data/networks"
-mod_detect_dir: "../../static/raw_data/network_modules"
+mod_detect_dir: "../../static/raw_data/networks_modules"
 network_mod_dir: "../../static/app_data/network_modules"
 
 ppi_dir: "../../static/raw_data/ppi"
