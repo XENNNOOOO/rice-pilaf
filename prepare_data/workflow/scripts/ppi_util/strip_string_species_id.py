@@ -39,7 +39,7 @@ def remove_header(list):
     return list[1:]
 
 def output_to_file(list, output_dir):
-    with open(f"{output_dir}", "w") as f:
+    with open(f"{output_dir}", "w+") as f:
         for row in list:
             f.write("\t".join(row))
             f.write("\n")

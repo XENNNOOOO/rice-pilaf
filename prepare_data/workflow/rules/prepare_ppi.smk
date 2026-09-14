@@ -10,8 +10,8 @@ rule strip_string_species_id:
         path.join(config["network_dir"], "ppi_raw/{network}.txt")
     output:
         path.join(config["network_dir"], "{network}.txt")
-    script:
-        "python strip_string_species_id.py "\
+    shell:
+        "python scripts/ppi_util/strip_string_species_id.py "\
         "{input} {output}"
 
 rule prepare_uniprot_to_gene:
