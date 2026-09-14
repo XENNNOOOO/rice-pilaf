@@ -1,11 +1,10 @@
 from os import path
-# Resolve Network Dependency
-for key, path in config['networks'].items():
-    config["networks"][key] = path.format(network_dir=config["network_dir"])
 
 
-# removes species id from raw data from STRING. During development,
-# this is the version 12.0
+############################
+#   PRE-MODULE DETECTION   #
+############################
+
 rule strip_string_species_id:
     input:
         path.join(config["network_dir"], "ppi_raw/{network}.txt")
@@ -15,7 +14,6 @@ rule strip_string_species_id:
         "python strip_string_species_id.py "\
         "{input} {output}"
 
-# no clue where Nb_gene_descriptions.csv is sources from
 rule prepare_uniprot_to_gene:
     input:
         "{0}/Nb/Nb_gene_descriptions.csv".format(config["gene_desc_dir"])
@@ -35,7 +33,7 @@ rule get_proteins_from_network:
         "{{input}} {0}/all_proteins/{{wildcards.network}}/uniprot " \
         "--name all-proteins".format(config["ppi_dir"])
 
-rule convert_all_proteins_to_genes:
+rule convert_all_proteins_to_genes: #
     input:
         proteins_file="{0}/all_proteins/{{network}}/uniprot/all-proteins.txt".format(config["ppi_dir"]),
         protein_to_gene_mapping="{0}/msu_mapping/uniprot_to_msu.pickle".format(config["gene_id_mapping_dir"])
@@ -45,3 +43,22 @@ rule convert_all_proteins_to_genes:
         "python scripts/ppi_util/convert_all_prot_to_gene.py " \
         "{{input.proteins_file}} {{input.protein_to_gene_mapping}} " \
         "{0}/all_genes/{{wildcards.network}}/MSU".format(config["raw_enrich_dir"])
+
+###############################
+#   PRE-ENRICHMENT ANALYSIS   #
+###############################
+
+# force snakemake to process uniprot
+ruleorder: convert_modules_uniprot_to_msu > get_clusterone_modules
+ruleorder: convert_modules_uniprot_to_msu > restore_node_labels_from_int_to_id
+
+rule convert_modules_uniprot_to_msu:
+    input:
+        module_file = "{0}/{{network}}/{{algo}}/{{param}}/uniprot/{{algo}}-module-list.tsv".format(config["network_mod_dir"]),
+        mapping_file="{0}/msu_mapping/uniprot_to_msu.pickle".format(config["gene_id_mapping_dir"])
+    output:
+        "{0}/{{network}}/{{algo}}/{{param}}/MSU/{{algo}}-module-list.tsv".format(config["network_mod_dir"])
+    shell:
+        "python scripts/ppi_util/convert_mod_prot_to_gene.py " \
+        "{{input.module_file}} {{input.mapping_file}} " \
+        "{0}/{{wildcards.network}}/{{wildcards.algo}}/{{wildcards.param}}/MSU ".format(config["network_mod_dir"])

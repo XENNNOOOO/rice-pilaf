@@ -56,41 +56,52 @@ networks:
 ppi_networks:
     - "STRING-Physical"
 
+coexpression_networks:
+    - "OS-CX"
+    - "RCRN"
+
 get_mod_from_clusterone_path: "scripts/module_util/get-modules-from-clusterone-results.py"
 
 # ClusterOne
 clusterone_jar_path: "scripts/module_detection/cluster_one-1.0.jar"
-clusterone_min_density:
-    30: 0.3
-    40: 0.4
-    60: 0.6
-    90: 0.9
-
-# FOX
-wcc_threshold:
-    5: 0.05
-    20: 0.2
-    40: 0.4
-    60: 0.6
-
-# Coach
-affinity_thresholds:
-    "150": 0.15
-    "175": 0.175
-    "200": 0.2
-    "225": 0.225
-
-# Demon
-merging_thresholds:
-    "0": 0
-    "25": 0.25
-    "50": 0.5
-    "75": 0.75
 
 # FIRST PARAM (For Counting Modules)
 first_param_list:
     "clusterone": 30
     "fox": 5
+
+
+module_detection_params:
+    "clusterone":
+        "30": 0.3
+        "40": 0.4
+        "60": 0.6
+        "90": 0.9
+    "fox":
+        "5": 0.05
+        "20": 0.2
+        "40": 0.4
+        "60": 0.6
+    "coach":
+        "150": 0.15
+        "175": 0.175
+        "200": 0.2
+        "225": 0.225
+    "demon":
+        "0": 0
+        "25": 0.25
+        "50": 0.5
+        "75": 0.75
+
+enrichment_types:
+    "ontology_enrichment":
+        - "go"
+        - "po"
+        - "to"
+    "pathway_enrichment":
+        - "ora"
+        - "pe"
+        - "spia"
 
 ricegeneid_msu_to_transcript_outputs:
     - "all-transcript-id"

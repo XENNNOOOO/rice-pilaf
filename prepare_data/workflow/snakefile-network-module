@@ -1,22 +1,42 @@
+from os import path
 configfile: "configfile.yaml"
 
-# include: "rules/execute_enrichment_analysis.smk"
-include: "rules/prepare_enrichment_analysis.smk"
+include: "rules/prepare_ppi.smk"
 include: "rules/module_detection.smk"
-# include : "rules/test.smk"
-# rule test:
-#     input:
-#         "../../static/raw_data/enrichment_analysis/temp/STRING-Physical/clusterone/30/module_count.txt"
+include: "rules/enrichment_analysis.smk"
 
-rule test:
+rule all:
     input:
-        expand(
-            path.join(config['mod_detect_dir'], "{network}/coach/{affinity_threshold}/uniprot/coach-module-list.tsv"),
-            affinity_threshold = config['affinity_thresholds'],
-            network = config['ppi_networks']
-        ),
-        expand(
-            path.join(config['mod_detect_dir'], "{network}/demon/{merging_threshold}/uniprot/demon-module-list.tsv"),
-            merging_threshold = config['merging_thresholds'],
-            network = config['ppi_networks']
-        )
+        [
+            path.join(config["app_enrich_dir"],
+            f"{network}/output/{algo}/{param}/{enrichment_type}/{enrichment_subtype}/results/done")
+            for network in config['ppi_networks'] + config['coexpression_networks']
+            for algo, params in config['module_detection_params'].items()
+            for param in params
+            for enrichment_type, enrichment_subtypes in config['enrichment_types'].items()
+            for enrichment_subtype in enrichment_subtypes
+        ],
+
+rule only_ppi_networks:
+    input:
+        [
+            path.join(config["app_enrich_dir"],
+            f"{network}/output/{algo}/{param}/{enrichment_type}/{enrichment_subtype}/results/done")
+            for network in config['ppi_networks']
+            for algo, params in config['module_detection_params'].items()
+            for param in params
+            for enrichment_type, enrichment_subtypes in config['enrichment_types'].items()
+            for enrichment_subtype in enrichment_subtypes
+        ],
+
+rule only_coexpression_networks:
+    input:
+        [
+            path.join(config["app_enrich_dir"],
+            f"{network}/output/{algo}/{param}/{enrichment_type}/{enrichment_subtype}/results/done")
+            for network in config['coexpression_networks']
+            for algo, params in config['module_detection_params'].items()
+            for param in params
+            for enrichment_type, enrichment_subtypes in config['enrichment_types'].items()
+            for enrichment_subtype in enrichment_subtypes
+        ],
