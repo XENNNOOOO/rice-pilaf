@@ -169,7 +169,7 @@ rule finish_enrichment:
 def ceo(file_path):
     # clean enrichment output
     # unnecessary, only for legibility and style
-    return re.sub(r"\/results\/go-df-\d+.tsv$","",file_path)
+    return re.sub(r"\/results\/\w+-df-\d+.tsv$","",file_path)
 
 rule execute_gene_ontology_enrichment_analysis:
     input:
@@ -218,40 +218,40 @@ rule execute_trait_ontology_enrichment_analysis:
 rule execute_overrepresentation_pathway_enrichment_analysis_via_clusterprofiler:
     input:    
         mod_list = path.join(config['network_mod_dir'], '{network}/{algo}/{param}/transcript/{algo}-module-list.tsv'),
-        all_genes = path.join(config['raw_enrich_dir'], 'all_genes/{network}/transcript/all-genes.txt'),
+        all_genes = path.join(config['raw_enrich_dir'], 'all_genes/{network}/transcript/all-genes.tsv'),
     output:
-        path.join(config['app_enrich_dir'], "{network}/output/{algo}/{param}/pathway_enrichment/ora/results/go-df-{index}.tsv")
+        path.join(config['app_enrich_dir'], "{network}/output/{algo}/{param}/pathway_enrichment/ora/results/ora-df-{index}.tsv")
     params:
         output_dir = lambda wildcards, output: ceo(output[0])
     shell:
-        "Rscript --vanilla scripts/enrichment_analysis/ontology_enrichment/ora-enrichment.r " \
+        "Rscript --vanilla scripts/enrichment_analysis/pathway_enrichment/ora-enrichment.r " \
         "-g {input.mod_list} -i {wildcards.index} -b {input.all_genes} " \
         "-o {params.output_dir}"
 
 rule execute_topology_based_pathway_enrichment_analysis_via_pathway_express:
     input:    
         mod_list = path.join(config['network_mod_dir'], '{network}/{algo}/{param}/transcript/{algo}-module-list.tsv'),
-        all_genes = path.join(config['raw_enrich_dir'], 'all_genes/{network}/transcript/all-genes.txt'),
+        all_genes = path.join(config['raw_enrich_dir'], 'all_genes/{network}/transcript/all-genes.tsv'),
     output:
-        path.join(config['app_enrich_dir'], "{network}/output/{algo}/{param}/pathway_enrichment/pe/results/go-df-{index}.tsv")
+        path.join(config['app_enrich_dir'], "{network}/output/{algo}/{param}/pathway_enrichment/pe/results/pe-df-{index}.tsv")
     params:
         output_dir = lambda wildcards, output: ceo(output[0])
     shell:
-        "Rscript --vanilla scripts/enrichment_analysis/ontology_enrichment/pe-enrichment.r " \
+        "Rscript --vanilla scripts/enrichment_analysis/pathway_enrichment/pe-enrichment.r " \
         "-g {input.mod_list} -i {wildcards.index} -b {input.all_genes} " \
         "-o {params.output_dir}"
 
 rule execute_topology_based_pathway_enrichment_analysis_via_spia:
     input:    
         mod_list = path.join(config['network_mod_dir'], '{network}/{algo}/{param}/transcript/{algo}-module-list.tsv'),
-        all_genes = path.join(config['raw_enrich_dir'], 'all_genes/{network}/transcript/all-genes.txt'),
+        all_genes = path.join(config['raw_enrich_dir'], 'all_genes/{network}/transcript/all-genes.tsv'),
         spia_path = path.join(config['raw_enrich_dir'], 'kegg_dosa/SPIA'),
     output:
-        path.join(config['app_enrich_dir'], "{network}/output/{algo}/{param}/pathway_enrichment/pe/results/go-df-{index}.tsv")
+        path.join(config['app_enrich_dir'], "{network}/output/{algo}/{param}/pathway_enrichment/spia/results/spia-df-{index}.tsv")
     params:
         output_dir = lambda wildcards, output: ceo(output[0])
     shell:
-        "Rscript --vanilla scripts/enrichment_analysis/ontology_enrichment/pe-enrichment.r " \
+        "Rscript --vanilla scripts/enrichment_analysis/pathway_enrichment/pe-enrichment.r " \
         "-g {input.mod_list} -i {wildcards.index} -b {input.all_genes} -s {input.spia_path}" \
         "-o {params.output_dir}"
 
