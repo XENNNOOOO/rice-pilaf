@@ -34,11 +34,19 @@ from ..coexpression.util import (
     get_uniprot_entry,
     get_user_facing_algo,
     get_user_facing_parameter,
-    load_module_graph,
     module_detection_algos,
     sanitize_msu_id,
 )
-from .util import get_query_network_summary, get_user_facing_network
+# load_module_graph is intentionally imported from the PPI module's own
+# util.py, NOT from coexpression.util, because the PPI-specific version
+# here is the one that knows how to translate STRING's UniProt-labeled
+# network edges against MSU-labeled module gene lists (see
+# get_msu_to_uniprot_mapping/get_uniprot_to_msu_mapping and the
+# is_ppi_network branch inside callbacks/ppi/util.py's own
+# convert_module_to_edge_list). The coexpression.util version has no
+# such branch and would silently render an empty graph for every PPI
+# module, since it compares UniProt accessions against MSU gene IDs.
+from .util import get_query_network_summary, get_user_facing_network, load_module_graph
 
 Parameter_slider = namedtuple("Parameter_slider", ["marks", "value"])
 

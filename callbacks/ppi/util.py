@@ -78,6 +78,14 @@ COEXPRESSION_NETWORKS_VALUE_LABEL = [
     },
 ]
 
+PPI_NETWORKS_VALUE_LABEL = [
+    {
+        "value": "STRING-Physical",
+        "label": "STRING (Physical Subnetwork)",
+        "label_id": "string-physical",
+    },
+]
+
 Enrichment_tab = namedtuple("Enrichment_tab", ["enrichment", "path"])
 enrichment_tabs = [
     Enrichment_tab("Gene Ontology", "ontology_enrichment/go"),
@@ -104,9 +112,10 @@ def get_user_facing_algo(algo):
 
 
 def get_user_facing_network(network):
-    for entry in COEXPRESSION_NETWORKS_VALUE_LABEL:
+    for entry in COEXPRESSION_NETWORKS_VALUE_LABEL + PPI_NETWORKS_VALUE_LABEL:
         if entry["value"] == network:
             return entry["label"]
+    return network
 
 
 def get_parameters_for_algo(algo, network="OS-CX"):
@@ -1040,3 +1049,127 @@ def get_pubmed_entry(gene, pubmed_mapping):
         )
     except KeyError:
         return html.Span([NULL_PLACEHOLDER, html.Br()])
+
+
+# =========================================
+# UniProt <-> MSU ID crosswalk for PPI networks
+# =========================================
+
+
+def get_uniprot_to_msu_mapping():
+    """
+    Loads the {uniprot_accession: [msu_gene_id, ...]} crosswalk built by
+    prepare_uniprot_to_gene.py (see prepare_data/workflow/rules/prepare_ppi.smk,
+    rule prepare_uniprot_to_gene).
+    """
+    with open(f"{Constants.MSU_MAPPING}/uniprot_to_msu.pickle", "rb") as f:
+        return pickle.load(f)
+
+
+def get_msu_to_uniprot_mapping():
+    """
+    Inverts get_uniprot_to_msu_mapping() into {msu_gene_id: [uniprot_accession, ...]}.
+    A single MSU gene can map from more than one UniProt accession (isoforms),
+    so each gene's value is a list, not a single accession.
+    """
+    uniprot_to_msu = get_uniprot_to_msu_mapping()
+    msu_to_uniprot = {}
+    for uniprot_acc, msu_genes in uniprot_to_msu.items():
+        for gene in msu_genes:
+            msu_to_uniprot.setdefault(gene, []).append(uniprot_acc)
+
+    return msu_to_uniprot
+
+
+# =========================================
+# PPI network summary / hub gene identification
+# =========================================
+
+
+def get_query_network_summary(network, gene_ids, top_n_hubs=10):
+    """
+    Builds the induced PPI subnetwork for a list of query genes and computes
+    summary topology statistics and a degree-ranked hub gene list.
+
+    Parameters:
+    - network: PPI network to query (e.g. "STRING-Physical")
+    - gene_ids: MSU accessions of the query genes
+    - top_n_hubs: Number of top hub genes (by degree) to return
+
+    Returns:
+    - dict with keys:
+        "stats": {"num_nodes", "num_edges", "density", "avg_degree"}
+        "hub_genes": list of (gene, degree) tuples, sorted by degree descending
+        "is_empty": True if the induced subnetwork has no edges
+        "unrecognized_genes": set of query gene_ids absent from the network entirely
+    """
+    gene_ids = set(gene_ids)
+
+    msu_to_uniprot = get_msu_to_uniprot_mapping()
+    uniprot_to_msu = get_uniprot_to_msu_mapping()
+
+    # Map query genes -> the UniProt accessions that represent them in this network
+    query_uniprot_ids = set()
+    for gene in gene_ids:
+        query_uniprot_ids.update(msu_to_uniprot.get(gene, []))
+
+    network_file = f"{Constants.NETWORKS}/{network}.txt"
+
+    G = nx.Graph()
+    nodes_seen_in_network = set()
+
+    with open(network_file) as f:
+        for line in f:
+            line = line.rstrip("\n")
+            if not line:
+                continue
+
+            parts = line.split("\t")
+            node0, node1 = parts[0], parts[1]
+            weight = float(parts[2]) if len(parts) > 2 else 1.0
+
+            nodes_seen_in_network.add(node0)
+            nodes_seen_in_network.add(node1)
+
+            if node0 in query_uniprot_ids and node1 in query_uniprot_ids:
+                G.add_edge(node0, node1, weight=weight)
+
+    # A gene is "unrecognized" if none of its UniProt accessions appear anywhere in the network file at all
+    unrecognized_genes = {
+        gene
+        for gene in gene_ids
+        if not any(
+            acc in nodes_seen_in_network for acc in msu_to_uniprot.get(gene, [])
+        )
+    }
+
+    num_nodes = G.number_of_nodes()
+    num_edges = G.number_of_edges()
+    density = nx.density(G) if num_nodes > 1 else 0.0
+    avg_degree = (
+        sum(dict(G.degree()).values()) / num_nodes if num_nodes > 0 else 0.0
+    )
+
+    # Rank hub genes, translating nodes back to MSU IDs for display.
+    # A gene can correspond to multiple UniProt accessions (isoforms); 
+    # keep the highest degree observed across them.
+    hub_genes_msu = {}
+    for uniprot_acc, degree in G.degree():
+        for gene in uniprot_to_msu.get(uniprot_acc, [uniprot_acc]):
+            hub_genes_msu[gene] = max(hub_genes_msu.get(gene, 0), degree)
+
+    hub_genes = sorted(hub_genes_msu.items(), key=lambda x: x[1], reverse=True)[
+        :top_n_hubs
+    ]
+
+    return {
+        "stats": {
+            "num_nodes": num_nodes,
+            "num_edges": num_edges,
+            "density": density,
+            "avg_degree": avg_degree,
+        },
+        "hub_genes": hub_genes,
+        "is_empty": num_edges == 0,
+        "unrecognized_genes": unrecognized_genes,
+    }
