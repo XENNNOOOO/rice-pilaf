@@ -207,7 +207,7 @@ rule execute_trait_ontology_enrichment_analysis:
         to_annotations = path.join(config['raw_enrich_dir'], 'to/{network}/to-annotations.tsv'),
         to_id_to_name = path.join(config['raw_enrich_dir'], 'to/{network}/to-id-to-name.tsv'),
     output:
-        path.join(config['app_enrich_dir'], "{network}/output/{algo}/{param}/ontology_enrichment/to/results/go-df-{index}.tsv")
+        path.join(config['app_enrich_dir'], "{network}/output/{algo}/{param}/ontology_enrichment/to/results/to-df-{index}.tsv")
     params:
         output_dir = lambda wildcards, output: ceo(output[0])
     shell:
