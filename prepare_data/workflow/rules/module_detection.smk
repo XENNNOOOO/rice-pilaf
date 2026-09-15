@@ -62,7 +62,7 @@ rule restore_node_labels_from_int_to_id:
     output:
         path.join(config['network_mod_dir'], "{network}/{algo}/{param}/{format}/{algo}-module-list.tsv")
     wildcard_constraints:
-        ext = r"txt|csv"
+        format = r"MSU|uniprot"
     shell:
         "python scripts/module_util/restore-node-labels-in-modules.py "
         "{input.result} {input.node_mapping} "
@@ -72,6 +72,9 @@ rule restore_node_labels_from_int_to_id:
 # FOX
 
 rule execute_fox:
+    # the script creates a temp folder and removes it after. 
+    # parallel calls to this script will cause errors.
+    threads: 1
     input:
         path.join(config['mod_detect_dir'], "{network}/mapping/int-edge-list.txt")
     output:

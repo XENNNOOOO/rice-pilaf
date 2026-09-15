@@ -207,7 +207,7 @@ rule execute_trait_ontology_enrichment_analysis:
         to_annotations = path.join(config['raw_enrich_dir'], 'to/{network}/to-annotations.tsv'),
         to_id_to_name = path.join(config['raw_enrich_dir'], 'to/{network}/to-id-to-name.tsv'),
     output:
-        path.join(config['app_enrich_dir'], "{network}/output/{algo}/{param}/ontology_enrichment/to/results/to-df-{index}.tsv")
+        path.join(config['app_enrich_dir'], "{network}/output/{algo}/{param}/ontology_enrichment/to/results/go-df-{index}.tsv")
     params:
         output_dir = lambda wildcards, output: ceo(output[0])
     shell:
@@ -216,6 +216,7 @@ rule execute_trait_ontology_enrichment_analysis:
         "-o {params.output_dir}"
  
 rule execute_overrepresentation_pathway_enrichment_analysis_via_clusterprofiler:
+    threads: 3 # https://www.kegg.jp/kegg/rest/ "limit to 3 requests per second"
     input:    
         mod_list = path.join(config['network_mod_dir'], '{network}/{algo}/{param}/transcript/{algo}-module-list.tsv'),
         all_genes = path.join(config['raw_enrich_dir'], 'all_genes/{network}/transcript/all-genes.tsv'),
