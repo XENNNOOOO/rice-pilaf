@@ -77,14 +77,13 @@ rule convert_modules_msu_to_rap:
 
 rule convert_modules_msu_to_transcript:
     input:
-        module_file = "{0}/{{network}}/{{algo}}/{{value}}/MSU/{{algo}}-module-list.tsv".format(config["network_mod_dir"]),
-        mapping_file="{0}/mapping/{{network}}/msu-to-transcript-id.pickle".format(config["raw_enrich_dir"])
+        module_file = path.join(config["network_mod_dir"], "{network}/MSU/{algo}/{value}/{algo}-module-list.tsv"),
+        mapping_file = path.join(config["raw_enrich_dir"], "mapping/{network}/msu-to-transcript-id.pickle")
     output:
-        "{0}/{{network}}/{{algo}}/{{value}}/transcript/{{algo}}-module-list.tsv".format(config["network_mod_dir"])
+        path.join(config["network_mod_dir"], "{network}/transcript/{algo}/{value}/{algo}-module-list.tsv")
     shell:
-        "python scripts/enrichment_analysis/util/file-convert-msu.py " \
-        "{{input.module_file}} {{input.mapping_file}} " \
-        "{0}/{{wildcards.network}}/{{wildcards.algo}}/{{wildcards.value}} transcript ".format(config["network_mod_dir"])
+        "python scripts/enrichment_analysis/util/module-convert-msu.py " \
+        "{input.module_file} {input.mapping_file} {output}"
 
 # Ontology Preparation
 
@@ -133,7 +132,7 @@ checkpoint count_modules:
     # this is a checkpoint rather than a rule so that
     # get_enriched_module_list can request for the file.
     input:
-        mod_list="{0}/{{network}}/{{algo}}/{{param}}/MSU/{{algo}}-module-list.tsv".format(config["network_mod_dir"])
+        mod_list="{0}/{{network}}/MSU/{{algo}}/{{param}}/{{algo}}-module-list.tsv".format(config["network_mod_dir"])
     output:
         count_file="{0}/temp/{{network}}/{{algo}}/{{param}}/module_count.txt".format(config["raw_enrich_dir"])
     run:
@@ -173,7 +172,7 @@ def ceo(file_path):
 
 rule execute_gene_ontology_enrichment_analysis:
     input:
-        mod_list = path.join(config['network_mod_dir'], '{network}/{algo}/{param}/MSU/{algo}-module-list.tsv'),
+        mod_list = path.join(config['network_mod_dir'], '{network}/MSU/{algo}/{param}/{algo}-module-list.tsv'),
         all_genes = path.join(config['raw_enrich_dir'], 'all_genes/{network}/MSU/all-genes.txt'),
         go_annotations = path.join(config['raw_enrich_dir'], 'go/{network}/go-annotations.tsv')
     output:
@@ -187,7 +186,7 @@ rule execute_gene_ontology_enrichment_analysis:
         
 rule execute_plant_ontology_enrichment_analysis:
     input:
-        mod_list = path.join(config['network_mod_dir'], '{network}/{algo}/{param}/MSU/{algo}-module-list.tsv'),
+        mod_list = path.join(config['network_mod_dir'], '{network}/MSU/{algo}/{param}/{algo}-module-list.tsv'),
         all_genes = path.join(config['raw_enrich_dir'], 'all_genes/{network}/MSU/all-genes.txt'),
         po_annotations = path.join(config['raw_enrich_dir'], 'po/{network}/po-annotations.tsv'),
         po_id_to_name = path.join(config['raw_enrich_dir'], 'po/{network}/po-id-to-name.tsv'),
@@ -202,7 +201,7 @@ rule execute_plant_ontology_enrichment_analysis:
 
 rule execute_trait_ontology_enrichment_analysis:
     input:    
-        mod_list = path.join(config['network_mod_dir'], '{network}/{algo}/{param}/MSU/{algo}-module-list.tsv'),
+        mod_list = path.join(config['network_mod_dir'], '{network}/MSU/{algo}/{param}/{algo}-module-list.tsv'),
         all_genes = path.join(config['raw_enrich_dir'], 'all_genes/{network}/MSU/all-genes.txt'),
         to_annotations = path.join(config['raw_enrich_dir'], 'to/{network}/to-annotations.tsv'),
         to_id_to_name = path.join(config['raw_enrich_dir'], 'to/{network}/to-id-to-name.tsv'),
@@ -218,7 +217,7 @@ rule execute_trait_ontology_enrichment_analysis:
 rule execute_overrepresentation_pathway_enrichment_analysis_via_clusterprofiler:
     threads: 3 # https://www.kegg.jp/kegg/rest/ "limit to 3 requests per second"
     input:    
-        mod_list = path.join(config['network_mod_dir'], '{network}/{algo}/{param}/transcript/{algo}-module-list.tsv'),
+        mod_list = path.join(config['network_mod_dir'], '{network}/transcript/{algo}/{param}/{algo}-module-list.tsv'),
         all_genes = path.join(config['raw_enrich_dir'], 'all_genes/{network}/transcript/all-genes.tsv'),
     output:
         path.join(config['app_enrich_dir'], "{network}/output/{algo}/{param}/pathway_enrichment/ora/results/ora-df-{index}.tsv")
@@ -230,8 +229,9 @@ rule execute_overrepresentation_pathway_enrichment_analysis_via_clusterprofiler:
         "-o {params.output_dir}"
 
 rule execute_topology_based_pathway_enrichment_analysis_via_pathway_express:
+    threads: 3 # https://www.kegg.jp/kegg/rest/ "limit to 3 requests per second"
     input:    
-        mod_list = path.join(config['network_mod_dir'], '{network}/{algo}/{param}/transcript/{algo}-module-list.tsv'),
+        mod_list = path.join(config['network_mod_dir'], '{network}/transcript/{algo}/{param}/{algo}-module-list.tsv'),
         all_genes = path.join(config['raw_enrich_dir'], 'all_genes/{network}/transcript/all-genes.tsv'),
     output:
         path.join(config['app_enrich_dir'], "{network}/output/{algo}/{param}/pathway_enrichment/pe/results/pe-df-{index}.tsv")
@@ -244,7 +244,7 @@ rule execute_topology_based_pathway_enrichment_analysis_via_pathway_express:
 
 rule execute_topology_based_pathway_enrichment_analysis_via_spia:
     input:    
-        mod_list = path.join(config['network_mod_dir'], '{network}/{algo}/{param}/transcript/{algo}-module-list.tsv'),
+        mod_list = path.join(config['network_mod_dir'], '{network}/transcript/{algo}/{param}/{algo}-module-list.tsv'),
         all_genes = path.join(config['raw_enrich_dir'], 'all_genes/{network}/transcript/all-genes.tsv'),
         spia_path = path.join(config['raw_enrich_dir'], 'kegg_dosa/SPIA'),
     output:
@@ -252,7 +252,7 @@ rule execute_topology_based_pathway_enrichment_analysis_via_spia:
     params:
         output_dir = lambda wildcards, output: ceo(output[0])
     shell:
-        "Rscript --vanilla scripts/enrichment_analysis/pathway_enrichment/pe-enrichment.r " \
-        "-g {input.mod_list} -i {wildcards.index} -b {input.all_genes} -s {input.spia_path}" \
+        "Rscript --vanilla scripts/enrichment_analysis/pathway_enrichment/spia-enrichment.r " \
+        "-g {input.mod_list} -i {wildcards.index} -b {input.all_genes} -s {input.spia_path} " \
         "-o {params.output_dir}"
 

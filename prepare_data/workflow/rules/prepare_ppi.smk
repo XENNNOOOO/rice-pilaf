@@ -1,4 +1,5 @@
 from os import path
+PPI_NETWORKS_PATTERN = "|".join(config["ppi_networks"])
 
 
 ############################
@@ -10,6 +11,8 @@ rule strip_string_species_id:
         path.join(config["network_dir"], "ppi_raw/{network}.txt")
     output:
         path.join(config["network_dir"], "{network}.txt")
+    wildcard_constraints:
+        network = PPI_NETWORKS_PATTERN
     shell:
         "python scripts/ppi_util/strip_string_species_id.py "\
         "{input} {output}"
@@ -28,6 +31,8 @@ rule get_proteins_from_network:
         path.join(config["network_dir"], "{network}.txt")
     output:
         "{0}/all_proteins/{{network}}/uniprot/all-proteins.txt".format(config["ppi_dir"])
+    wildcard_constraints:
+        network = PPI_NETWORKS_PATTERN
     shell:
         "python scripts/network_util/get-nodes-from-network.py " \
         "{{input}} {0}/all_proteins/{{wildcards.network}}/uniprot " \
@@ -39,6 +44,8 @@ rule convert_all_proteins_to_genes: #
         protein_to_gene_mapping="{0}/msu_mapping/uniprot_to_msu.pickle".format(config["gene_id_mapping_dir"])
     output:
         "{0}/all_genes/{{network}}/MSU/all-genes.txt".format(config["raw_enrich_dir"])
+    wildcard_constraints:
+        network = PPI_NETWORKS_PATTERN
     shell:
         "python scripts/ppi_util/convert_all_prot_to_gene.py " \
         "{{input.proteins_file}} {{input.protein_to_gene_mapping}} " \
@@ -54,11 +61,13 @@ ruleorder: convert_modules_uniprot_to_msu > restore_node_labels_from_int_to_id
 
 rule convert_modules_uniprot_to_msu:
     input:
-        module_file = "{0}/{{network}}/{{algo}}/{{param}}/uniprot/{{algo}}-module-list.tsv".format(config["network_mod_dir"]),
+        module_file = "{0}/{{network}}/uniprot/{{algo}}/{{param}}/{{algo}}-module-list.tsv".format(config["network_mod_dir"]),
         mapping_file="{0}/msu_mapping/uniprot_to_msu.pickle".format(config["gene_id_mapping_dir"])
     output:
-        "{0}/{{network}}/{{algo}}/{{param}}/MSU/{{algo}}-module-list.tsv".format(config["network_mod_dir"])
+        "{0}/{{network}}/MSU/{{algo}}/{{param}}/{{algo}}-module-list.tsv".format(config["network_mod_dir"])
+    wildcard_constraints:
+        network = PPI_NETWORKS_PATTERN
     shell:
         "python scripts/ppi_util/convert_mod_prot_to_gene.py " \
         "{{input.module_file}} {{input.mapping_file}} " \
-        "{0}/{{wildcards.network}}/{{wildcards.algo}}/{{wildcards.param}}/MSU ".format(config["network_mod_dir"])
+        "{0}/{{wildcards.network}}/MSU/{{wildcards.algo}}/{{wildcards.param}} ".format(config["network_mod_dir"])

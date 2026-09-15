@@ -35,13 +35,13 @@ rule get_clusterone_modules:
     input:
         path.join(config['mod_detect_dir'], "{network}/temp/clusterone/clusterone-results-{param}.csv"),
     output:
-        path.join(config['network_mod_dir'], "{network}/clusterone/{param}/{format}/clusterone-module-list.tsv")
+        path.join(config['network_mod_dir'], "{network}/{format}/clusterone/{param}/clusterone-module-list.tsv")
     wildcard_constraints:
         format = r"MSU|uniprot"
     shell:
         "python scripts/module_util/get-modules-from-clusterone-results.py " \
         "{input} "\
-        f"{path.join(config['network_mod_dir'], '{wildcards.network}/clusterone/{wildcards.param}/{wildcards.format}')}"
+        f"{path.join(config['network_mod_dir'], '{wildcards.network}/{wildcards.format}/clusterone/{wildcards.param}')}"
 
 
 # UTILITY (For FOX, COACH, and DEMON)
@@ -62,13 +62,13 @@ rule restore_node_labels_from_int_to_id:
         result = path.join(config['mod_detect_dir'], "{network}/temp/{algo}/{algo}-int-module-list-{param}.csv"),
         node_mapping = path.join(config['mod_detect_dir'], "{network}/mapping/int-edge-list-node-mapping.pickle"),
     output:
-        path.join(config['network_mod_dir'], "{network}/{algo}/{param}/{format}/{algo}-module-list.tsv")
+        path.join(config['network_mod_dir'], "{network}/{format}/{algo}/{param}/{algo}-module-list.tsv")
     wildcard_constraints:
         format = r"MSU|uniprot"
     shell:
         "python scripts/module_util/restore-node-labels-in-modules.py "
         "{input.result} {input.node_mapping} "
-        f"{path.join(config['network_mod_dir'], '{wildcards.network}/{wildcards.algo}/{wildcards.param}/{wildcards.format}')} "
+        f"{path.join(config['network_mod_dir'], '{wildcards.network}/{wildcards.format}/{wildcards.algo}/{wildcards.param}')} "
         "{wildcards.algo}"
 
 # FOX
