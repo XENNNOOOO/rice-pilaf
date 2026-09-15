@@ -99,7 +99,7 @@ enrichment_types:
         - "po"
         - "to"
     "pathway_enrichment":
-        - "ora"
+        # - "ora"
         - "pe"
         - "spia"
 

@@ -36,6 +36,8 @@ rule get_clusterone_modules:
         path.join(config['mod_detect_dir'], "{network}/temp/clusterone/clusterone-results-{param}.csv"),
     output:
         path.join(config['network_mod_dir'], "{network}/clusterone/{param}/{format}/clusterone-module-list.tsv")
+    wildcard_constraints:
+        format = r"MSU|uniprot"
     shell:
         "python scripts/module_util/get-modules-from-clusterone-results.py " \
         "{input} "\
