@@ -5,6 +5,22 @@ import re
 #   Preprocessing   #
 #####################
 
+# Gene extraction
+
+COEXPRESSION_NETWORKS_PATTERN = "|".join(config["coexpression_networks"])
+
+rule get_genes_from_network:
+    input:
+        path.join(config["network_dir"], "{network}.txt")
+    output:
+        "{0}/all_genes/{{network}}/MSU/all-genes.txt".format(config["raw_enrich_dir"])
+    wildcard_constraints:
+        network = COEXPRESSION_NETWORKS_PATTERN
+    shell:
+        "python scripts/network_util/get-nodes-from-network.py " \
+        "{{input}} {0}/all_genes/{{wildcards.network}}/MSU " \
+        "--name all-genes".format(config["raw_enrich_dir"])
+
 # ID conversion files
 
 rule ricegeneid_msu_to_transcript_id:
@@ -51,29 +67,29 @@ rule convert_all_genes_msu_to_transcript:
         "{{input.all_genes}} {{input.mapping_file}} " \
         "{0}/all_genes/{{wildcards.network}} transcript".format(config["raw_enrich_dir"])
 
-rule convert_all_genes_msu_to_rap:
-    input:
-        all_genes = "{0}/all_genes/{{network}}/MSU/all-genes.txt".format(config["raw_enrich_dir"]),
-        mapping_file="{0}/msu_mapping/msu_to_rap.pickle".format(config["gene_id_mapping_dir"])
-    output:
-        "{0}/all_genes/{{network}}/rap/all-genes.tsv".format(config["raw_enrich_dir"])
-    shell:
-        "python scripts/enrichment_analysis/util/file-convert-msu.py " \
-        "{{input.all_genes}} {{input.mapping_file}} " \
-        "{0}/all_genes/{{wildcards.network}} rap".format(config["raw_enrich_dir"])
+# rule convert_all_genes_msu_to_rap:
+#     input:
+#         all_genes = "{0}/all_genes/{{network}}/MSU/all-genes.txt".format(config["raw_enrich_dir"]),
+#         mapping_file="{0}/msu_mapping/msu_to_rap.pickle".format(config["gene_id_mapping_dir"])
+#     output:
+#         "{0}/all_genes/{{network}}/rap/all-genes.tsv".format(config["raw_enrich_dir"])
+#     shell:
+#         "python scripts/enrichment_analysis/util/file-convert-msu.py " \
+#         "{{input.all_genes}} {{input.mapping_file}} " \
+#         "{0}/all_genes/{{wildcards.network}} rap".format(config["raw_enrich_dir"])
 
 # Module Conversion
 
-rule convert_modules_msu_to_rap:
-    input:
-        module_file = "{0}/{{network}}/{{algo}}/{{value}}/MSU/{{algo}}-module-list.tsv".format(config["network_mod_dir"]),
-        mapping_file="{0}/msu_mapping/msu_to_rap.pickle".format(config["gene_id_mapping_dir"])
-    output:
-        "{0}/{{network}}/{{algo}}/{{value}}/rap/{{algo}}-module-list.tsv".format(config["network_mod_dir"])
-    shell:
-        "python scripts/enrichment_analysis/util/file-convert-msu.py " \
-        "{{input.module_file}} {{input.mapping_file}} " \
-        "{0}/{{wildcards.network}}/{{wildcards.algo}}/{{wildcards.value}} rap ".format(config["network_mod_dir"])
+# rule convert_modules_msu_to_rap:
+#     input:
+#         module_file = "{0}/{{network}}/MSU/{{algo}}/{{value}}/{{algo}}-module-list.tsv".format(config["network_mod_dir"]),
+#         mapping_file="{0}/msu_mapping/msu_to_rap.pickle".format(config["gene_id_mapping_dir"])
+#     output:
+#         "{0}/{{network}}/{{algo}}/{{value}}/rap/{{algo}}-module-list.tsv".format(config["network_mod_dir"])
+#     shell:
+#         "python scripts/enrichment_analysis/util/file-convert-msu.py " \
+#         "{{input.module_file}} {{input.mapping_file}} " \
+#         "{0}/{{wildcards.network}}/{{wildcards.algo}}/{{wildcards.value}} rap ".format(config["network_mod_dir"])
 
 rule convert_modules_msu_to_transcript:
     input:
