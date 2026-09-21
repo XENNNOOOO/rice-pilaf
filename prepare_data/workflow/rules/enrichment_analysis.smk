@@ -231,7 +231,6 @@ rule execute_trait_ontology_enrichment_analysis:
         "-o {params.output_dir}"
  
 rule execute_overrepresentation_pathway_enrichment_analysis_via_clusterprofiler:
-    threads: 3 # https://www.kegg.jp/kegg/rest/ "limit to 3 requests per second"
     input:    
         mod_list = path.join(config['network_mod_dir'], '{network}/transcript/{algo}/{param}/{algo}-module-list.tsv'),
         all_genes = path.join(config['raw_enrich_dir'], 'all_genes/{network}/transcript/all-genes.tsv'),
@@ -245,7 +244,6 @@ rule execute_overrepresentation_pathway_enrichment_analysis_via_clusterprofiler:
         "-o {params.output_dir}"
 
 rule execute_topology_based_pathway_enrichment_analysis_via_pathway_express:
-    threads: 3 # https://www.kegg.jp/kegg/rest/ "limit to 3 requests per second"
     input:    
         mod_list = path.join(config['network_mod_dir'], '{network}/transcript/{algo}/{param}/{algo}-module-list.tsv'),
         all_genes = path.join(config['raw_enrich_dir'], 'all_genes/{network}/transcript/all-genes.tsv'),
