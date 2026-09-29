@@ -54,7 +54,8 @@ networks:
     "STRING-Physical": "{network_dir}/STRING-Physical.txt"
 
 ppi_networks:
-    - "STRING-Physical"
+    # - "STRING-Physical"
+    - "STRING"
 
 coexpression_networks:
     - "OS-CX"
