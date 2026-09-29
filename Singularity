@@ -15,7 +15,8 @@ From: bioconductor/bioconductor_docker:RELEASE_3_17-R-4.3.0
         python3-dev \
         python3-pip \
         r-cran-ggplot2 \
-        r-cran-optparse \
+        r-cran-optparse \    
+        python-is-python3 \
         && apt-get clean \
         && rm -rf /var/lib/apt/lists/*
     
