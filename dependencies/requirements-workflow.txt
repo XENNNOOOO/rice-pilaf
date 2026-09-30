@@ -7,3 +7,4 @@ cdlib[all]==0.3.0
 nltk==3.8.1
 snakemake==7.32.4
 pulp==2.7.0
+ASLPAw
