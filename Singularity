@@ -12,19 +12,28 @@ From: bioconductor/bioconductor_docker:RELEASE_3_17-R-4.3.0
     # Workaround for headless Java man page directory issue
     mkdir -p /usr/share/man/man1 /usr/share/man/man2
 
-    # Install system requirements (added build-essential and wget)
+    apt-get update && apt-get install -y --no-install-recommends \
+        wget \
+        lsb-release
+
+    # randomly copied from the website
+    wget https://downloads.skewed.de/skewed-keyring/skewed-keyring_1.5_all_$(lsb_release -s -c).deb
+    dpkg -i skewed-keyring_1.5_all_$(lsb_release -s -c).deb
+
+    echo "deb [signed-by=/usr/share/keyrings/skewed-keyring.gpg] https://downloads.skewed.de/apt $(lsb_release -s -c) main" > \
+    /etc/apt/sources.list.d/skewed.list
+
     apt-get update \
         && apt-get install -y --no-install-recommends \
         build-essential \
         cmake \
         git \
-        wget \
         openjdk-11-jre \
         python3-dev \
         python3-pip \
+        python-is-python3 \
         r-cran-ggplot2 \
         r-cran-optparse \
-        python-is-python3 \
         python3-graph-tool \
         && apt-get clean \
         && rm -rf /var/lib/apt/lists/*
