@@ -51,6 +51,13 @@ From: bioconductor/bioconductor_docker:RELEASE_3_17-R-4.3.0
         && rm -rf lazyfoxdir \
         && chmod +x LazyFox
 
+    # hacks to add more without rebuilding completely
+    apt-get update \
+        && apt-get install -y --no-install-recommends \
+        python3-graph-tool \
+        && apt-get clean \
+        && rm -rf /var/lib/apt/lists/*
+
 %environment
     export PATH="/app/prepare_data/workflow/scripts:$PATH"
 
