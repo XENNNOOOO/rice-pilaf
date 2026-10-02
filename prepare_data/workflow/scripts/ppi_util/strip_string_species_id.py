@@ -5,12 +5,11 @@ SEPARATOR = " "
 SPECIES_PREFIX_SEPARATOR = "."
 HAS_HEADER = True
 
-def extract_interactions(STRING_file):
-    all_interactions = []
+def extract_interactions_to_file(STRING_file, output_dir):
     
     in_header = HAS_HEADER
-    
-    with open(STRING_file) as network:
+
+    with open(STRING_file) as network, open(f"{output_dir}", "w+") as f:
         for row in network:
             row = row.rstrip()
             col = row.split(SEPARATOR)
@@ -24,9 +23,32 @@ def extract_interactions(STRING_file):
             values.append(remove_prefix(col[NODE_B], SPECIES_PREFIX_SEPARATOR))
             values.append(col[SCORE])
             
-            all_interactions.append(values)  
+
+            f.write("\t".join(values))
+            f.write("\n")
+
+# def extract_interactions(STRING_file):
+#     all_interactions = []
+    
+#     in_header = HAS_HEADER
+    
+#     with open(STRING_file) as network:
+#         for row in network:
+#             row = row.rstrip()
+#             col = row.split(SEPARATOR)
             
-    return all_interactions
+#             if in_header:
+#                 in_header = False
+#                 continue
+            
+#             values = []
+#             values.append(remove_prefix(col[NODE_A], SPECIES_PREFIX_SEPARATOR))
+#             values.append(remove_prefix(col[NODE_B], SPECIES_PREFIX_SEPARATOR))
+#             values.append(col[SCORE])
+            
+#             all_interactions.append(values)  
+            
+#     return all_interactions
 
 def remove_prefix(string, separator):
     return string.split(separator)[1]
@@ -38,11 +60,11 @@ def display(list):
 def remove_header(list):
     return list[1:]
 
-def output_to_file(list, output_dir):
-    with open(f"{output_dir}", "w+") as f:
-        for row in list:
-            f.write("\t".join(row))
-            f.write("\n")
+# def output_to_file(list, output_dir):
+#     with open(f"{output_dir}", "w+") as f:
+#         for row in list:
+#             f.write("\t".join(row))
+#             f.write("\n")
 
 if __name__ == "__main__":
     import argparse
@@ -67,5 +89,7 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    result = extract_interactions(args.STRING_file)
-    output_to_file(result, args.output_dir)
+    extract_interactions_to_file(args.STRING_file, args.output_dir)
+
+    # result = extract_interactions(args.STRING_file)
+    # output_to_file(result, args.output_dir)
