@@ -88,11 +88,11 @@ module_detection_params:
     #     "175": 0.175
     #     "200": 0.2
     #     "225": 0.225
-    "demon":
-        "0": 0
-        "25": 0.25
-        "50": 0.5
-        "75": 0.75
+    # "demon":
+    #     "0": 0
+    #     "25": 0.25
+    #     "50": 0.5
+    #     "75": 0.75
 
 enrichment_types:
     "ontology_enrichment":
