@@ -45,7 +45,8 @@ rule test_all_enrichment_analysis:
     input:
         [
             path.join(config["app_enrich_dir"],
-            f"STRING/output/fox/5/{enrichment_type}/{enrichment_subtype}/results/{enrichment_subtype}-df-1.tsv")
+            f"STRING/output/fox/5/{enrichment_type}/{enrichment_subtype}/results/{enrichment_subtype}-df-{index}.tsv")
             for enrichment_type, enrichment_subtypes in config['enrichment_types'].items()
             for enrichment_subtype in enrichment_subtypes
+            for index in range(1,11)
         ]
