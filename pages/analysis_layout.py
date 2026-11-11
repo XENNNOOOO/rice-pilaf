@@ -2,7 +2,9 @@ from collections import OrderedDict
 
 from dash import html
 
+import pages.analysis.chromatin_feature as chromatin_feature
 import pages.analysis.co_expr as co_expr
+import pages.analysis.ppi as ppi
 import pages.analysis.epigenome as epigenome
 import pages.analysis.intro as intro
 import pages.analysis.lift_over as lift_over
@@ -20,6 +22,8 @@ def get_analaysis_layout_dictionary():
             Constants.LABEL_LIFT_OVER: "Gene List and Lift-Over",
             Constants.LABEL_TEXT_MINING: "Gene Retrieval by Text Mining",
             Constants.LABEL_COEXPRESSION: "Coexpression Network Analysis",
+            Constants.LABEL_PPI: "Protein-Protein Interaction Network",
+            Constants.LABEL_CHROMATIN: "Chromatin Feature Prediction",
             Constants.LABEL_TFBS: "Regulatory Feature Enrichment",
             Constants.LABEL_EPIGENOME: "Epigenomic Information",
             Constants.LABEL_SUMMARY: "Summary",
@@ -35,6 +39,8 @@ layout = html.Div(
         lift_over.layout,
         text_mining.layout,
         co_expr.layout,
+        ppi.layout,
+        chromatin_feature.layout,
         tf_enrich.layout,
         epigenome.layout,
         summary.layout,

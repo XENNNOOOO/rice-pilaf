@@ -392,6 +392,66 @@ layout = html.Div(
                     ],
                     className="gray-container ps-3 pb-4 info-div",
                 ),
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            [
+                                html.H5("Protein Protein Interaction Network Analysis"),
+                                html.P(
+                                    "Placeholder text for PPI analysis.",
+                                    className="pt-3",
+                                ),
+                                html.P(
+                                    "Placeholder text for PPI analysis."
+                                ),
+                            ],
+                            className="col-sm-9",
+                        ),
+                        dbc.Col(
+                            [
+                                html.Div(
+                                    html.Img(
+                                        src="assets/images/network1.png",
+                                        className="img-about-the-app",
+                                    ),
+                                    className="text-center",
+                                )
+                            ],
+                            className="col-sm-3 d-flex flex-wrap align-items-center",
+                        ),
+                    ],
+                    className="ps-5 pb-4 info-div",
+                ),
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            [
+                                html.Div(
+                                    html.Img(
+                                        src="assets/images/beads1.png",
+                                        className="img-about-the-app-enlarge1",
+                                    ),
+                                    className="text-center",
+                                )
+                            ],
+                            className="col-sm-3 d-flex flex-wrap align-items-center",
+                        ),
+                        dbc.Col(
+                            [
+                                html.H5("Chromatin Feature Prediction"),
+                                html.P(
+                                    "Placeholder text for Chromatin Feature Prediction.",
+                                    className="pt-3",
+                                ),
+                                html.P(
+                                    "Placeholder text for Chromatin Feature Prediction."
+                                ),
+                            ],
+                            className="col-sm-9 pe-6 alt-row",
+                        ),
+                    ],
+                    className="gray-container ps-3 pb-4 info-div",
+                ),
             ],
         ),
         html.Div(

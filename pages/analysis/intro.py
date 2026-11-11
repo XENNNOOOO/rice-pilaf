@@ -52,6 +52,22 @@ layout = html.Div(
                             className="pb-3",
                         ),
                         html.Li(
+                            [
+                                html.B("Protein-Protein Interaction Network"),
+                                html.Br(),
+                                Constants.INTRO_PPI,
+                            ],
+                            className="pb-3",
+                        ),
+                        html.Li(
+                            [
+                                html.B("Chromatin Feature Prediction"),
+                                html.Br(),
+                                Constants.INTRO_CHROMATIN,
+                            ],
+                            className="pb-3",
+                        ),
+                        html.Li(
                             [html.B("Summary"), html.Br(), Constants.INTRO_SUMMARY]
                         ),
                     ],
